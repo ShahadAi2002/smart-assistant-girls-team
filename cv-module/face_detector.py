@@ -24,4 +24,6 @@ def draw_faces(image_path, output_path):
        cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 2) 
    
    #save img
-   cv2.imwrite(output_path, img)    
+   cv2.imwrite(output_path, img)   
+
+
