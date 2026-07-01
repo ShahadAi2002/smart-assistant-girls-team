@@ -8,7 +8,7 @@ def detect_faces(image_path):
     #Loading Haar Cascade Classifiers
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
     
-    face = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=7, minSize=(50, 50))
+    face = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=7, minSize=(30, 30))
 
     return len(face), face   
 
