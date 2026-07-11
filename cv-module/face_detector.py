@@ -1,47 +1,139 @@
 import cv2
-def detect_faces(image_path):
-    # read the image
-    img = cv2.imread(image_path)
-    #convert to grayscale
-    gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+import os
+from typing import Tuple
 
-    #Loading face Haar Cascade Classifiers
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
+def detect_faces(image_path: str) -> dict:
+     
+    """
+    Detect faces in an image using the Haar Cascade classifier.
+
+    Args:
+        image_path (str): Path to the input image.
+
+    Returns:
+    dict: A dictionary containing:
+        - type (str): Module type.
+        - result (dict): Detection result.
+        - confidence (float): Confidence score.
+    """
+    try:
+        # Check if the image file exists
+        if not os.path.exists(image_path):
+            print("Error: Image file not found.")
+            return {"type": "face","result": {"detected": False,"count": 0},"confidence": 0.0}
+
+        # Read the image
+        img = cv2.imread(image_path)
+
+        # Check if the image is corrupted or unsupported
+        if img is None:
+            print("Error: Unable to read the image. The file may be corrupted or in an unsupported format.")
+            return {"type": "face","result": {"detected": False,"count": 0},"confidence": 0.0}
+
+
+        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        #Loading face Haar Cascade Classifiers
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
     
-    face = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=7, minSize=(30, 30))
+        face = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=7, minSize=(30, 30))
 
-    return len(face), face   
+        return {"type": "face",
+                "result": {"detected": len(face) > 0,"count": len(face)},
+                "confidence": 0.91 if len(face) > 0 else 0.0}   
 
-def draw_faces(image_path, output_path):
-   # read the image
-   img = cv2.imread(image_path)
+    except Exception as e:
+         print(f"Unexpected error: {e}")
+         return {"type": "face","result": {"detected": False,"count": 0},"confidence": 0.0}
+
+
+def draw_faces(image_path: str, output_path: str) -> None:
    
-   #call detect_faces
-   __,face = detect_faces(image_path)
+   """
+    Draw bounding boxes around detected faces and save the output image.
 
-   #drawing bounding boxes
-   for (x, y, w, h) in face:
-       cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 2) 
+    Args:
+        image_path (str): Path to the input image.
+        output_path (str): Path where the processed image will be saved.
+
+    Returns:
+        None
+    """
+   try:
+        # Check if the image file exists
+        if not os.path.exists(image_path):
+            print("Error: Image file not found.")
+            return
+
+        # Read the image
+        img = cv2.imread(image_path)
+
+        # Check if the image is corrupted or unsupported
+        if img is None:
+            print("Error: Unable to read the image. The file may be corrupted or in an unsupported format.")
+            return
    
-   #save img
-   cv2.imwrite(output_path, img)   
+   
+        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-def detect_faces_with_eyes(image_path):
-     # read the image
-    img = cv2.imread(image_path)
-    #convert to grayscale
-    gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        face = face_cascade.detectMultiScale(gray_image,scaleFactor=1.1,minNeighbors=7,minSize=(30, 30))
 
-    faces_count, faces = detect_faces(image_path)
+        #drawing bounding boxes
+        for (x, y, w, h) in face:
+            cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 2) 
+   
+   
+        cv2.imwrite(output_path, img)   
 
-    #Loading eye Haar Cascade Classifiers
-    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
+   except Exception as e:
+        print(f"Unexpected error: {e}")
+        return    
 
-    eyes_detected = []
+def detect_faces_with_eyes(image_path: str) -> List[int]:
+    """
+    Detect faces and count the eyes detected within each face.
 
-    for (x, y, w, h) in faces:
-        roi_gray = gray_image[y:y+h, x:x+w]
-        eyes = eye_cascade.detectMultiScale(roi_gray,scaleFactor=1.1,minNeighbors=5)
-        eyes_detected.append(len(eyes))
+    Args:
+        image_path (str): Path to the input image.
 
-    return eyes_detected
+    Returns:
+        list[int]: A list containing the number of eyes detected for each face.
+    """
+
+    try:
+        # Check if the image file exists
+        if not os.path.exists(image_path):
+            print("Error: Image file not found.")
+            return []
+
+        # Read the image
+        img = cv2.imread(image_path)
+
+        # Check if the image is corrupted or unsupported
+        if img is None:
+            print("Error: Unable to read the image. The file may be corrupted or in an unsupported format.")
+            return []
+    
+    
+        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        faces = face_cascade.detectMultiScale(gray_image,scaleFactor=1.1,minNeighbors=7,minSize=(30, 30))
+
+        #Loading eye Haar Cascade Classifiers
+        eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
+
+        eyes_detected = []
+
+        for (x, y, w, h) in faces:
+            roi_gray = gray_image[y:y+h, x:x+w]
+            eyes = eye_cascade.detectMultiScale(roi_gray,scaleFactor=1.1,minNeighbors=5)
+            eyes_detected.append(len(eyes))
+
+        return eyes_detected
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return []
