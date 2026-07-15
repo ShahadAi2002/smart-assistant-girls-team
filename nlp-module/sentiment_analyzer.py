@@ -4,10 +4,11 @@ from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 
 
-# Point 1: Create a manual dataset
-
+# Dataset: 60 sentences divided equally into 3 classes
 texts = [
-    # Positive sentences
+    # -------------------------
+    # Positive sentences: 20
+    # -------------------------
     "The service is excellent",
     "I am very happy today",
     "The application is easy to use",
@@ -23,8 +24,15 @@ texts = [
     "This is a beautiful day",
     "I enjoyed the lesson",
     "The work was completed perfectly",
+    "I am satisfied with the service",
+    "This product is very good",
+    "The result is acceptable and useful",
+    "I enjoy using this application",
+    "The team did a great job",
 
-    # Negative sentences
+    # -------------------------
+    # Negative sentences: 20
+    # -------------------------
     "The service is terrible",
     "I am very sad today",
     "The application is difficult to use",
@@ -40,8 +48,15 @@ texts = [
     "This is a bad day",
     "I hated the lesson",
     "The work contains many mistakes",
+    "I am not happy",
+    "I am not satisfied with the service",
+    "This product is not good",
+    "The result is not acceptable",
+    "I do not enjoy using this application",
 
-    # Neutral sentences
+    # -------------------------
+    # Neutral sentences: 20
+    # -------------------------
     "The meeting starts at ten",
     "The file was sent today",
     "The product is available",
@@ -56,23 +71,30 @@ texts = [
     "The report contains five pages",
     "The class has twenty students",
     "The message was delivered",
-    "The program runs on the computer"
+    "The program runs on the computer",
+    "The meeting room is number five",
+    "The application was installed yesterday",
+    "The document is stored in the folder",
+    "The course contains six lessons",
+    "The computer is connected to the network"
 ]
 
+
+# Labels must match the order and number of sentences
 labels = (
-    ["positive"] * 15
-    + ["negative"] * 15
-    + ["neutral"] * 15
+    ["positive"] * 20
+    + ["negative"] * 20
+    + ["neutral"] * 20
 )
 
 
-# Point 2: Create a Logistic Regression model
-
+# Create a pipeline containing TF-IDF and Logistic Regression
 sentiment_model = Pipeline([
     (
         "tfidf",
         TfidfVectorizer(
-            ngram_range=(1, 2)
+            ngram_range=(1, 2),
+            lowercase=True
         )
     ),
     (
@@ -85,8 +107,7 @@ sentiment_model = Pipeline([
 ])
 
 
-# Point 3: Evaluate using 5-fold cross-validation
-
+# Evaluate the model using 5-fold cross-validation
 scores = cross_val_score(
     sentiment_model,
     texts,
@@ -95,51 +116,106 @@ scores = cross_val_score(
     scoring="accuracy"
 )
 
-print("Cross-validation scores:", scores)
-print("Average accuracy:", scores.mean())
 
-
-# Train the final model using all data
-
+# Train the final model using all dataset sentences
 sentiment_model.fit(texts, labels)
 
 
 def analyze_sentiment(text):
-    if not isinstance(text, str) or not text.strip():
-        return {
-            "type": "sentiment",
-            "result": {
-                "label": "neutral"
-            },
-            "confidence": 0.0
-        }
+    """
+    Analyze the sentiment of a given text.
 
-    prediction = str(sentiment_model.predict([text])[0])
+    The function returns one of three labels:
+    positive, negative, or neutral.
 
-    probabilities = sentiment_model.predict_proba([text])[0]
+    Output format:
+    {
+        "type": "sentiment",
+        "result": {
+            "label": "positive"
+        },
+        "confidence": 0.85
+    }
+    """
 
-    confidence = float(probabilities.max())
+    # Check that the input is a string
+    if not isinstance(text, str):
+        raise TypeError(
+            "The input text must be a string."
+        )
 
+    # Remove unnecessary spaces
+    text = text.strip()
+
+    # Reject empty input
+    if not text:
+        raise ValueError(
+            "The input text cannot be empty."
+        )
+
+    # Predict the sentiment label
+    prediction = sentiment_model.predict(
+        [text]
+    )[0]
+
+    # Get the prediction probabilities
+    probabilities = sentiment_model.predict_proba(
+        [text]
+    )[0]
+
+    # Select the highest probability as confidence
+    confidence = probabilities.max()
+
+    # Return the unified output format
     return {
         "type": "sentiment",
         "result": {
-            "label": prediction
+            "label": str(prediction)
         },
-        "confidence": confidence
+        "confidence": round(
+            float(confidence),
+            2
+        )
     }
 
-# Test the function
 
+# Run evaluation and tests only when this file is executed directly
 if __name__ == "__main__":
+
+    print(
+        "Dataset size:",
+        len(texts)
+    )
+
+    print(
+        "Number of labels:",
+        len(labels)
+    )
+
+    print(
+        "Cross-validation scores:",
+        scores
+    )
+
+    print(
+        "Average accuracy:",
+        round(float(scores.mean()), 2)
+    )
+
     test_sentences = [
         "The service is amazing",
         "The application is very bad",
-        "The meeting starts at nine"
+        "The meeting starts at nine",
+        "I am not happy",
+        "I am satisfied with the result",
+        "This product is not good"
     ]
+
+    print("\nSentiment Test Results")
 
     for sentence in test_sentences:
         result = analyze_sentiment(sentence)
 
-        print("Text:", sentence)
+        print("\nText:", sentence)
         print("Result:", result)
-        print("-" * 30)
+        print("-" * 40)

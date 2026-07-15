@@ -102,7 +102,9 @@ labels = [
 
 
 # Convert text into numerical features using TF-IDF
-vectorizer = TfidfVectorizer(ngram_range=(1, 2))
+vectorizer = TfidfVectorizer(
+    ngram_range=(1, 2)
+)
 
 X = vectorizer.fit_transform(texts)
 y = labels
@@ -123,47 +125,27 @@ naive_bayes_model = MultinomialNB()
 naive_bayes_model.fit(X_train, y_train)
 
 nb_predictions = naive_bayes_model.predict(X_test)
-nb_accuracy = accuracy_score(y_test, nb_predictions)
+nb_accuracy = accuracy_score(
+    y_test,
+    nb_predictions
+)
 
 
 # Model 2: Logistic Regression
-logistic_model = LogisticRegression(max_iter=1000)
-logistic_model.fit(X_train, y_train)
+logistic_model = LogisticRegression(
+    max_iter=1000
+)
+
+logistic_model.fit(
+    X_train,
+    y_train
+)
 
 lr_predictions = logistic_model.predict(X_test)
-lr_accuracy = accuracy_score(y_test, lr_predictions)
-
-
-# Compare model accuracies
-print("Naive Bayes Accuracy:", nb_accuracy)
-print("Logistic Regression Accuracy:", lr_accuracy)
-
-
-# Print classification report for each model
-print("\nClassification Report for Naive Bayes:")
-print(
-    classification_report(
-        y_test,
-        nb_predictions,
-        zero_division=0
-    )
+lr_accuracy = accuracy_score(
+    y_test,
+    lr_predictions
 )
-
-print("\nClassification Report for Logistic Regression:")
-print(
-    classification_report(
-        y_test,
-        lr_predictions,
-        zero_division=0
-    )
-)
-
-
-# Print dataset information
-print("\nDataset size:", len(texts))
-print("Number of labels:", len(labels))
-print("TF-IDF shape:", X.shape)
-print("Classes:", set(y))
 
 
 # Choose the best model based on accuracy
@@ -177,35 +159,119 @@ else:
 
 def classify_intent(text):
     """
-    Classify the intent and return a unified output format.
+    Classify the text intent and return
+    the result using the unified output format.
     """
+
+    # Validate the input
+    if not isinstance(text, str):
+        raise TypeError("The input text must be a string.")
+
+    text = text.strip()
+
+    if not text:
+        raise ValueError("The input text cannot be empty.")
 
     # Convert the input text into TF-IDF features
     text_vector = vectorizer.transform([text])
 
     # Predict the intent
-    predicted_intent = best_model.predict(text_vector)[0]
+    predicted_intent = best_model.predict(
+        text_vector
+    )[0]
 
     # Get prediction probabilities
-    probabilities = best_model.predict_proba(text_vector)[0]
+    probabilities = best_model.predict_proba(
+        text_vector
+    )[0]
 
-    # Get the highest probability
     confidence = probabilities.max()
 
-    # Return unified output format
     return {
         "type": "intent",
         "result": {
             "label": str(predicted_intent)
         },
-        "confidence": round(float(confidence), 2)
+        "confidence": round(
+            float(confidence),
+            2
+        )
     }
 
 
-# Test classify_intent function
-sample_text = "How do I open the file?"
-result = classify_intent(sample_text)
+# Run tests only when this file is executed directly
+if __name__ == "__main__":
 
-print("\nBest Model:", best_model_name)
-print("Sample text:", sample_text)
-print("Result:", result)
+    print(
+        "Naive Bayes Accuracy:",
+        nb_accuracy
+    )
+
+    print(
+        "Logistic Regression Accuracy:",
+        lr_accuracy
+    )
+
+    print(
+        "\nClassification Report "
+        "for Naive Bayes:"
+    )
+
+    print(
+        classification_report(
+            y_test,
+            nb_predictions,
+            zero_division=0
+        )
+    )
+
+    print(
+        "\nClassification Report "
+        "for Logistic Regression:"
+    )
+
+    print(
+        classification_report(
+            y_test,
+            lr_predictions,
+            zero_division=0
+        )
+    )
+
+    print(
+        "\nDataset size:",
+        len(texts)
+    )
+
+    print(
+        "Number of labels:",
+        len(labels)
+    )
+
+    print(
+        "TF-IDF shape:",
+        X.shape
+    )
+
+    print(
+        "Classes:",
+        set(y)
+    )
+
+    sample_text = "How do I open the file?"
+    result = classify_intent(sample_text)
+
+    print(
+        "\nBest Model:",
+        best_model_name
+    )
+
+    print(
+        "Sample text:",
+        sample_text
+    )
+
+    print(
+        "Result:",
+        result
+    )
