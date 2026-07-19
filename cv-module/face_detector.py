@@ -1,6 +1,6 @@
 import cv2
 import os
-from typing import Tuple
+from typing import Tuple, List
 
 
 def detect_faces(image_path: str) -> dict:
