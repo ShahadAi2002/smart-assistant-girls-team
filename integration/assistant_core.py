@@ -1,17 +1,36 @@
+import sys
+import os
 
-def process_input(input_data):
-    return {
-        "type": "text",
-        "result": {},
-        "confidence": 0.0
-    }
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "nlp-module"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "knowledge-base"))
 
-def classify_intent(text):
-    return {
-        "type": "intent",
-        "result": {"intent": "unknown"},
-        "confidence": 0.0
-    }
+from intent_classifier import classify_intent
+from knowledge_store import log_intent, save_interaction
+
+
+def process_input(text):
+    intent_result = classify_intent(text)
+    
+    log_intent(
+        text=text,
+        intent=intent_result["result"]["label"],
+        confidence=intent_result["confidence"]
+    )
+    
+    save_interaction(
+        type="text",
+        input_data=text,
+        output_json=str(intent_result)
+    )
+    
+    return intent_result
+
+# def classify_intent(text):
+#     return {
+#         "type": "intent",
+#         "result": {"intent": "unknown"},
+#         "confidence": 0.0
+#     }
 
 def analyze_sentiment(text):
     return {
