@@ -46,4 +46,49 @@ def get_recent(n):
     ''', (n,))
     results = cursor.fetchall()
     conn.close()
-    return results     
+    return results   
+
+
+def sentiment_summary():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT label, COUNT(*) 
+        FROM sentiment_log 
+        GROUP BY label
+    ''')
+    results = cursor.fetchall()
+    conn.close()
+    
+    summary = {"positive": 0, "negative": 0, "neutral": 0}
+    for label, count in results:
+        summary[label] = count
+    
+    return summary
+
+
+def top_keywords_overall(n=10):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT output_json 
+        FROM interactions 
+        WHERE type = 'text'
+    ''')
+    results = cursor.fetchall()
+    conn.close()
+    
+    keyword_counts = {}
+    
+    for (output_json,) in results:
+        try:
+            data = eval(output_json)
+            keywords = data.get("keywords", {}).get("result", {}).get("keywords", [])
+            for keyword in keywords:
+                keyword_counts[keyword] = keyword_counts.get(keyword, 0) + 1
+        except:
+            continue
+    
+    sorted_keywords = sorted(keyword_counts.items(), key=lambda x: x[1], reverse=True)
+    
+    return [keyword for keyword, count in sorted_keywords[:n]] 
