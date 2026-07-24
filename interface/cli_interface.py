@@ -1,35 +1,42 @@
 import os
 import sys
 
-# Add the nlp-module folder path so Python can import NLP files
-NLP_MODULE_PATH = os.path.abspath(
+# Add integration folder path
+INTEGRATION_PATH = os.path.abspath(
     os.path.join(
         os.path.dirname(__file__),
         "..",
-        "nlp-module"
+        "integration"
     )
 )
 
-if NLP_MODULE_PATH not in sys.path:
-    sys.path.append(NLP_MODULE_PATH)
+# Add knowledge-base folder path
+KNOWLEDGE_BASE_PATH = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "knowledge-base"
+    )
+)
+
+if INTEGRATION_PATH not in sys.path:
+    sys.path.append(INTEGRATION_PATH)
+
+if KNOWLEDGE_BASE_PATH not in sys.path:
+    sys.path.append(KNOWLEDGE_BASE_PATH)
 
 
-from intent_classifier import classify_intent
-from sentiment_analyzer import analyze_sentiment
-from keyword_extractor import extract_keywords
-from summarizer import summarize_text
+from assistant_core import process_input
+from knowledge_store import get_recent
 
 
 def analyze_text():
     """
-    Analyze text using intent classification,
-    sentiment analysis, keyword extraction,
-    and the temporary summarizer function.
+    Analyze text using assistant_core.process_input().
     """
 
     text = input("\nEnter the text to analyze: ").strip()
 
-    # Handle empty text
     if not text:
         print("\nError: The text cannot be empty.")
         return
@@ -37,19 +44,17 @@ def analyze_text():
     try:
         print("\nAnalyzing text...")
 
-        # Run the real NLP functions
-        intent = classify_intent(text)
-        sentiment = analyze_sentiment(text)
-        keywords = extract_keywords(text)
+        result = process_input(text)
 
-        # Temporary summarizer function
-        summary = summarize_text(text)
+        intent = result["intent"]
+        sentiment = result["sentiment"]
+        keywords = result["keywords"]
+        summary = result["summary"]
 
         print("\n==============================")
         print("       Analysis Results")
         print("==============================")
 
-        # Intent result
         print("\n1. Intent Classification")
         print("Type:", intent["type"])
         print("Label:", intent["result"]["label"])
@@ -58,7 +63,6 @@ def analyze_text():
             round(float(intent["confidence"]), 2)
         )
 
-        # Sentiment result
         print("\n2. Sentiment Analysis")
         print("Type:", sentiment["type"])
         print("Label:", sentiment["result"]["label"])
@@ -67,7 +71,6 @@ def analyze_text():
             round(float(sentiment["confidence"]), 2)
         )
 
-        # Keyword result
         print("\n3. Keyword Extraction")
         print("Type:", keywords["type"])
         print(
@@ -79,7 +82,6 @@ def analyze_text():
             round(float(keywords["confidence"]), 2)
         )
 
-        # Summary result
         print("\n4. Summary")
         print(summary)
 
@@ -93,7 +95,7 @@ def analyze_text():
 
     except TypeError as error:
         print(
-            "\nError: One of the NLP functions returned "
+            "\nError: One of the functions returned "
             "an invalid data type:",
             error
         )
@@ -110,29 +112,52 @@ def analyze_image():
     Temporary image analysis function.
     """
 
-    print(
-        "\nImage analysis is not available yet."
-    )
+    print("\nImage analysis is not available yet.")
 
 
 def show_last_interactions():
     """
-    Temporary function for displaying previous interactions.
+    Display previous interactions from knowledge_store.
     """
 
-    print(
-        "\nPrevious interactions are not available yet."
-    )
+    try:
+        n = int(
+            input("\nHow many interactions do you want to show? ")
+        )
+
+        if n <= 0:
+            print("\nPlease enter a number greater than zero.")
+            return
+
+        interactions = get_recent(n)
+
+        if not interactions:
+            print("\nNo previous interactions found.")
+            return
+
+        print("\n==============================")
+        print("     Last Interactions")
+        print("==============================")
+
+        for interaction in interactions:
+            print("\n", interaction)
+
+    except ValueError:
+        print("\nPlease enter a valid number.")
+
+    except Exception as error:
+        print(
+            "\nAn error occurred while retrieving interactions:",
+            error
+        )
 
 
 def show_statistics():
     """
-    Temporary function for displaying statistics.
+    Temporary statistics function.
     """
 
-    print(
-        "\nStatistics are not available yet."
-    )
+    print("\nStatistics are not available yet.")
 
 
 def main_menu():
@@ -171,9 +196,7 @@ def main_menu():
             break
 
         elif not choice:
-            print(
-                "\nError: No option was entered."
-            )
+            print("\nError: No option was entered.")
 
         else:
             print(
@@ -184,3 +207,4 @@ def main_menu():
 
 if __name__ == "__main__":
     main_menu()
+    
