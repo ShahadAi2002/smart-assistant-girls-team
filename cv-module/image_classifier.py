@@ -1,6 +1,6 @@
 from face_detector import detect_faces
 
-def classify_image (image_path):
+def classify_image (image_path: str) -> dict:
    """
     Classify an image based on face detection results.
 

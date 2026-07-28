@@ -1,6 +1,6 @@
 import cv2
 import os
-from typing import Tuple, List
+from typing import List
 
 
 def detect_faces(image_path: str) -> dict:
@@ -35,7 +35,10 @@ def detect_faces(image_path: str) -> dict:
         gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         #Loading face Haar Cascade Classifiers
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        cascade_path = os.path.join(os.path.dirname(__file__),"models","haarcascade_frontalface_default.xml")
+        
+        face_cascade = cv2.CascadeClassifier(cascade_path)
+
     
         face = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=7, minSize=(30, 30))
 
@@ -119,11 +122,16 @@ def detect_faces_with_eyes(image_path: str) -> List[int]:
     
         gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        # Loading Haar Cascade Classifiers
+        face_path = os.path.join(os.path.dirname(__file__),"models","haarcascade_frontalface_default.xml")
+        eye_path = os.path.join(os.path.dirname(__file__),"models","haarcascade_eye.xml")
+
+        face_cascade = cv2.CascadeClassifier(face_path)
+
         faces = face_cascade.detectMultiScale(gray_image,scaleFactor=1.1,minNeighbors=7,minSize=(30, 30))
 
         #Loading eye Haar Cascade Classifiers
-        eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
+        eye_cascade = cv2.CascadeClassifier(eye_path)
 
         eyes_detected = []
 
