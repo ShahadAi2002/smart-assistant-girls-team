@@ -22,7 +22,7 @@ def analyze_text():
     if not text:
         return jsonify({"error": "No text provided"}), 400
     
-    result = process_input(text)
+    result = process_input(text, "text")
     return jsonify(result)
 
 
@@ -34,12 +34,8 @@ def analyze_image():
     if not image_path:
         return jsonify({"error": "No image path provided"}), 400
     
-    return jsonify({
-        "type": "face",
-        "result": {"detected": False, "count": 0},
-        "confidence": 0.0,
-        "message": "Image analysis coming soon"
-    })
+    result = process_input(image_path, "image")
+    return jsonify(result)
 
 
 @app.route('/assistant/history', methods=['GET'])
