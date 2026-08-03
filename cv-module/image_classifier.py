@@ -24,4 +24,3 @@ def classify_image (image_path: str) -> dict:
    return  {"type": "image_classification",
             "result": {"label": label,"face_count": face_count},
             "confidence": confidence}
-   

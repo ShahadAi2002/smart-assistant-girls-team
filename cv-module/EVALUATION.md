@@ -101,17 +101,18 @@ Finally, Parameter tuning significantly improved the face detection performance.
 ### Description
 
 A simple rule-based image classifier was implemented using the output of `detect_faces()`. Images are classified into two categories:
+
 - Contains Faces
 - No Faces
 
-The classifier depends entirely on the face detection results returned by the Haar Cascade-based face detector.
+The classifier relies entirely on the face detection results returned by the Haar Cascade-based face detector.
 
-**Note**: The confidence score follows the project's interface specification. A fixed value (0.91) is returned when one or more faces are detected, while a value of (0.0) is returned when no faces are detected. Therefore, it should not be interpreted as a probabilistic confidence score.
+> **Note:** The confidence score follows the project's interface specification. A fixed value of (0.91) is returned when one or more faces are detected, while a value of (0.0) is returned when no faces are detected. Therefore, it should not be interpreted as a probabilistic confidence score.
 
 ### Test Results
 
 | Test Image | Expected Face Count | Actual Face Count | Confidence | Correct? |
-|------------|--------------------|-------------------|------------|----------|
+|------------|--------------------|------------------|------------|----------|
 | no_face.jpg | 0 | 0 | 0.00 | Yes |
 | one_face.jpg | 1 | 1 | 0.91 | Yes |
 | two_faces.jpg | 2 | 2 | 0.91 | Yes |
@@ -122,22 +123,25 @@ The classifier depends entirely on the face detection results returned by the Ha
 
 ### Accuracy
 
-- Correct classifications: 6 / 7
-- Classification accuracy: 85.7% 
+- Correct face counts: 6 / 7
+- Face count accuracy: 85.7%
+
 ### Strengths
 
-- Produces consistent results on clear images. 
-- Successfully detects single and multiple frontal faces.
+- Produces consistent results on clear images.
+- Successfully detects single and multiple faces in clear images.
 - Fast and simple rule-based implementation.
 
 ### Limitations
 
 - Limited to two classes only (Contains Faces / No Faces).
 - Performance depends entirely on the underlying Haar Cascade detector.
-- Missed several faces in images containing many faces or challenging viewing angles. 
+- Missed several faces in images containing many faces or challenging viewing angles.
 - The confidence score is fixed by the project interface specification and does not represent a probabilistic confidence estimate.
 
+
 ## 3. OpenCV DNN Evaluation (Res10 SSD)
+
 ### Description
 
 A face detection model based on OpenCV's DNN module and the pre-trained Res10 SSD Caffe model was implemented. The model detects faces in images and returns the number of detected faces, bounding boxes, and an average confidence score for the detections.
@@ -145,7 +149,7 @@ A face detection model based on OpenCV's DNN module and the pre-trained Res10 SS
 ### Test Results
 
 | Test Image | Expected Face Count | Actual Face Count | Average Confidence | Correct? |
-|------------|--------------------|-------------------|--------------------|----------|
+|------------|--------------------|------------------|--------------------|----------|
 | no_face.jpg | 0 | 0 | 0.00 | Yes |
 | one_face.jpg | 1 | 1 | 0.90 | Yes |
 | two_faces.jpg | 2 | 2 | 1.00 | Yes |
@@ -156,7 +160,7 @@ A face detection model based on OpenCV's DNN module and the pre-trained Res10 SS
 
 ### Accuracy
 
-- Correct face counts: 5 / 7
+- Correct face counts: 5 / 7.
 - Face count accuracy: 71.4% on the tested images.
 - Successfully detected at least one face in all images containing faces.
 
@@ -180,13 +184,15 @@ A face detection model based on OpenCV's DNN module and the pre-trained Res10 SS
 
 
 ## 4. YuNet Face Detection Evaluation
+
 ### Description
+
 A face detection model based on OpenCV's YuNet deep learning model was implemented. The model detects faces in images and returns the number of detected faces, bounding boxes, and an average confidence score for the detections.
 
 ### Test Results
 
 | Test Image | Expected Face Count | Actual Face Count | Average Confidence | Correct? |
-|------------|--------------------|-------------------|--------------------|----------|
+|------------|--------------------|------------------|--------------------|----------|
 | no_face.jpg | 0 | 0 | 0.00 | Yes |
 | one_face.jpg | 1 | 1 | 0.95 | Yes |
 | two_faces.jpg | 2 | 2 | 0.94 | Yes |
@@ -195,10 +201,10 @@ A face detection model based on OpenCV's YuNet deep learning model was implement
 | lowlight.jpg | 1 | 0 | 0.00 | No |
 | maxresdefault.jpg | 15 | 14 | 0.92 | No |
 
-
 ### Accuracy
-- Correct face counts: 5 / 7 
-- Face count accuracy: 71.4%
+
+- Correct face counts: 5 / 7.
+- Face count accuracy: 71.4%.
 
 ### Execution Time
 
@@ -206,22 +212,22 @@ A face detection model based on OpenCV's YuNet deep learning model was implement
 
 ### Strengths
 
-- Achieved excellent performance on images containing multiple faces. 
+- Achieved excellent performance on images containing multiple faces.
 - Successfully detected 14 out of 15 faces in an image with significant pose variations.
 - Provides confidence scores and bounding boxes for detected faces.
+- Fast execution time compared with the Res10 SSD model.
 
 ### Limitations
 
 - Failed to detect the face in the low-light image.
- -  May miss faces in challenging lighting conditions.
+- May miss faces in challenging lighting conditions.
 - Face count accuracy may vary depending on image quality and pose variations.
 
 
-### Overall Comparison
+## Overall Comparison
 
-| Model | Correct Results | Accuracy |
-|-------|-----------------|----------|
-| Rule-Based | 6 / 7 | 85.7% |
-| Res10 SSD | 5 / 7 | 71.4% |
-| YuNet | 5 / 7 | 71.4% |
-
+| Model | Correct Results | Accuracy | Average Execution Time |
+|-------|----------------|----------|-----------------------|
+| Rule-Based | 6 / 7 | 85.7% | N/A |
+| Res10 SSD | 5 / 7 | 71.4% | 0.13 – 0.18 sec |
+| YuNet | 5 / 7 | 71.4% | 0.0318 sec |
