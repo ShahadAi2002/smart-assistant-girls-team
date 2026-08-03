@@ -1,6 +1,8 @@
 import cv2
 import os
-from typing import List
+
+from typing import Tuple, List
+
 
 
 def detect_faces(image_path: str) -> dict:
@@ -144,4 +146,4 @@ def detect_faces_with_eyes(image_path: str) -> List[int]:
 
     except Exception as e:
         print(f"Unexpected error: {e}")
-        return []
+        return [] 
