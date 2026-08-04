@@ -1,95 +1,206 @@
+# Imports
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import (
+    train_test_split,
+    cross_val_score,
+    GridSearchCV
+)
 from sklearn.pipeline import Pipeline
-
-
-# Dataset: 60 sentences divided equally into 3 classes
-texts = [
-    # -------------------------
-    # Positive sentences: 20
-    # -------------------------
-    "The service is excellent",
-    "I am very happy today",
-    "The application is easy to use",
-    "The experience was wonderful",
-    "I really like this product",
-    "The employees are helpful",
-    "The result is amazing",
-    "The project was successful",
-    "I feel comfortable and happy",
-    "The performance is excellent",
-    "The idea is creative",
-    "The service was fast",
-    "This is a beautiful day",
-    "I enjoyed the lesson",
-    "The work was completed perfectly",
-    "I am satisfied with the service",
-    "This product is very good",
-    "The result is acceptable and useful",
-    "I enjoy using this application",
-    "The team did a great job",
-
-    # -------------------------
-    # Negative sentences: 20
-    # -------------------------
-    "The service is terrible",
-    "I am very sad today",
-    "The application is difficult to use",
-    "The experience was awful",
-    "I do not like this product",
-    "The employees are unhelpful",
-    "The result is disappointing",
-    "The project failed",
-    "I feel tired and upset",
-    "The performance is poor",
-    "The idea is useless",
-    "The service was very slow",
-    "This is a bad day",
-    "I hated the lesson",
-    "The work contains many mistakes",
-    "I am not happy",
-    "I am not satisfied with the service",
-    "This product is not good",
-    "The result is not acceptable",
-    "I do not enjoy using this application",
-
-    # -------------------------
-    # Neutral sentences: 20
-    # -------------------------
-    "The meeting starts at ten",
-    "The file was sent today",
-    "The product is available",
-    "The lesson starts in the morning",
-    "The system was updated",
-    "The office is on the second floor",
-    "The exam is on Sunday",
-    "The request is under review",
-    "The lecture lasts one hour",
-    "The user logged into the system",
-    "The car is outside the house",
-    "The report contains five pages",
-    "The class has twenty students",
-    "The message was delivered",
-    "The program runs on the computer",
-    "The meeting room is number five",
-    "The application was installed yesterday",
-    "The document is stored in the folder",
-    "The course contains six lessons",
-    "The computer is connected to the network"
-]
-
-
-# Labels must match the order and number of sentences
-labels = (
-    ["positive"] * 20
-    + ["negative"] * 20
-    + ["neutral"] * 20
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report
 )
 
 
-# Create a pipeline containing TF-IDF and Logistic Regression
-sentiment_model = Pipeline([
+def combine_parts(first_parts, second_parts):
+    """
+    Combine two lists to create unique sentences.
+
+    10 first parts × 10 second parts = 100 sentences.
+    """
+
+    return [
+        f"{first_part} {second_part}".strip()
+        for first_part in first_parts
+        for second_part in second_parts
+    ]
+
+
+# =========================================================
+# Positive Dataset: 100 sentences
+# =========================================================
+
+positive_starters = [
+    "I am happy because",
+    "I am pleased that",
+    "It is wonderful that",
+    "I really appreciate how",
+    "I am impressed because",
+    "It is great that",
+    "I feel satisfied because",
+    "I am excited that",
+    "I am glad because",
+    "I enjoyed how"
+]
+
+
+positive_endings = [
+    "the application works smoothly.",
+    "the service responded quickly.",
+    "the team completed the task successfully.",
+    "the results were accurate and useful.",
+    "the interface was easy to use.",
+    "the problem was solved immediately.",
+    "the project achieved all its goals.",
+    "the employees were friendly and helpful.",
+    "the new feature saved a lot of time.",
+    "the experience was better than expected."
+]
+
+
+positive_sentences = combine_parts(
+    positive_starters,
+    positive_endings
+)
+
+
+# =========================================================
+# Negative Dataset: 100 sentences
+# =========================================================
+
+negative_starters = [
+    "I am disappointed because",
+    "I am unhappy that",
+    "It is frustrating that",
+    "I really dislike how",
+    "I am upset because",
+    "It is terrible that",
+    "I feel dissatisfied because",
+    "I regret that",
+    "I am annoyed because",
+    "I hated how"
+]
+
+
+negative_endings = [
+    "the application keeps crashing.",
+    "the service responds very slowly.",
+    "the team failed to complete the task.",
+    "the results were inaccurate and useless.",
+    "the interface was difficult to use.",
+    "the problem was not solved.",
+    "the project failed to achieve its goals.",
+    "the employees were rude and unhelpful.",
+    "the new feature wasted a lot of time.",
+    "the experience was worse than expected."
+]
+
+
+negative_sentences = combine_parts(
+    negative_starters,
+    negative_endings
+)
+
+
+# =========================================================
+# Neutral Dataset: 100 sentences
+# =========================================================
+
+neutral_starters = [
+    "The system reports that",
+    "The application shows that",
+    "The document states that",
+    "The user confirmed that",
+    "The report indicates that",
+    "The database records that",
+    "The program displays that",
+    "The message says that",
+    "The schedule shows that",
+    "The file confirms that"
+]
+
+
+neutral_endings = [
+    "the meeting starts at ten.",
+    "the file was uploaded yesterday.",
+    "the system was updated this morning.",
+    "the report contains five pages.",
+    "the course includes six lessons.",
+    "the application is connected to the network.",
+    "the request is currently under review.",
+    "the document is stored in the main folder.",
+    "the test contains twenty questions.",
+    "the session ended at three o'clock."
+]
+
+
+neutral_sentences = combine_parts(
+    neutral_starters,
+    neutral_endings
+)
+
+
+# =========================================================
+# Create Complete Dataset
+# =========================================================
+
+sentiment_data = {
+    "positive": positive_sentences,
+    "negative": negative_sentences,
+    "neutral": neutral_sentences
+}
+
+
+texts = []
+labels = []
+
+
+for sentiment_label, sentiment_sentences in sentiment_data.items():
+    texts.extend(
+        sentiment_sentences
+    )
+
+    labels.extend(
+        [sentiment_label] * len(sentiment_sentences)
+    )
+
+
+# =========================================================
+# Verify Dataset Size and Balance
+# =========================================================
+
+assert len(positive_sentences) == 100
+assert len(negative_sentences) == 100
+assert len(neutral_sentences) == 100
+
+assert len(texts) == 300
+assert len(labels) == 300
+
+assert labels.count("positive") == 100
+assert labels.count("negative") == 100
+assert labels.count("neutral") == 100
+
+
+# =========================================================
+# Split Dataset into Training and Testing Data
+# =========================================================
+
+X_train, X_test, y_train, y_test = train_test_split(
+    texts,
+    labels,
+    test_size=0.25,
+    random_state=42,
+    stratify=labels
+)
+
+
+# =========================================================
+# Baseline Pipeline
+# Before GridSearchCV
+# =========================================================
+
+baseline_sentiment_model = Pipeline([
     (
         "tfidf",
         TfidfVectorizer(
@@ -100,16 +211,19 @@ sentiment_model = Pipeline([
     (
         "classifier",
         LogisticRegression(
-            max_iter=1000,
+            max_iter=3000,
             random_state=42
         )
     )
 ])
 
 
-# Evaluate the model using 5-fold cross-validation
-scores = cross_val_score(
-    sentiment_model,
+# =========================================================
+# Baseline 5-Fold Cross-Validation
+# =========================================================
+
+baseline_cv_scores = cross_val_score(
+    baseline_sentiment_model,
     texts,
     labels,
     cv=5,
@@ -117,61 +231,193 @@ scores = cross_val_score(
 )
 
 
-# Train the final model using all dataset sentences
-sentiment_model.fit(texts, labels)
+# =========================================================
+# Train and Evaluate Baseline Model
+# =========================================================
+
+baseline_sentiment_model.fit(
+    X_train,
+    y_train
+)
+
+
+baseline_predictions = baseline_sentiment_model.predict(
+    X_test
+)
+
+
+baseline_accuracy = accuracy_score(
+    y_test,
+    baseline_predictions
+)
+
+
+# =========================================================
+# GridSearchCV Pipeline
+# =========================================================
+
+grid_pipeline = Pipeline([
+    (
+        "tfidf",
+        TfidfVectorizer(
+            lowercase=True
+        )
+    ),
+    (
+        "classifier",
+        LogisticRegression(
+            max_iter=3000,
+            random_state=42
+        )
+    )
+])
+
+
+# =========================================================
+# GridSearchCV Parameters
+# =========================================================
+
+param_grid = {
+    "tfidf__ngram_range": [
+        (1, 1),
+        (1, 2)
+    ],
+
+    "tfidf__min_df": [
+        1,
+        2
+    ],
+
+    "classifier__C": [
+        0.01,
+        0.1,
+        1,
+        10,
+        100
+    ],
+
+    # lbfgs supports multiclass classification
+    # and avoids the previous convergence warnings
+    "classifier__solver": [
+        "lbfgs"
+    ],
+
+    "classifier__class_weight": [
+        None,
+        "balanced"
+    ]
+}
+
+
+# =========================================================
+# Run GridSearchCV
+# =========================================================
+
+grid_search = GridSearchCV(
+    estimator=grid_pipeline,
+    param_grid=param_grid,
+    cv=5,
+    scoring="accuracy",
+    n_jobs=-1,
+    error_score="raise"
+)
+
+
+grid_search.fit(
+    X_train,
+    y_train
+)
+
+
+# =========================================================
+# Optimized Model
+# After GridSearchCV
+# =========================================================
+
+optimized_sentiment_model = grid_search.best_estimator_
+
+
+optimized_predictions = optimized_sentiment_model.predict(
+    X_test
+)
+
+
+optimized_accuracy = accuracy_score(
+    y_test,
+    optimized_predictions
+)
+
+
+# =========================================================
+# Compare Baseline and Optimized Models
+# =========================================================
+
+if optimized_accuracy > baseline_accuracy:
+    sentiment_model = optimized_sentiment_model
+    best_model_name = "Optimized Logistic Regression"
+    best_model_accuracy = optimized_accuracy
+else:
+    sentiment_model = baseline_sentiment_model
+    best_model_name = "Baseline Logistic Regression"
+    best_model_accuracy = baseline_accuracy
+
+
+# Train the selected model using the complete dataset
+sentiment_model.fit(
+    texts,
+    labels
+)
 
 
 def analyze_sentiment(text):
     """
     Analyze the sentiment of a given text.
 
-    The function returns one of three labels:
-    positive, negative, or neutral.
+    Args:
+        text (str): Input text.
 
-    Output format:
-    {
-        "type": "sentiment",
-        "result": {
-            "label": "positive"
-        },
-        "confidence": 0.85
-    }
+    Returns:
+        dict: Sentiment label and confidence.
+
+    Example:
+        {
+            "type": "sentiment",
+            "result": {
+                "label": "positive"
+            },
+            "confidence": 0.85
+        }
     """
 
-    # Check that the input is a string
     if not isinstance(text, str):
         raise TypeError(
             "The input text must be a string."
         )
 
-    # Remove unnecessary spaces
     text = text.strip()
 
-    # Reject empty input
     if not text:
         raise ValueError(
             "The input text cannot be empty."
         )
 
-    # Predict the sentiment label
     prediction = sentiment_model.predict(
         [text]
     )[0]
 
-    # Get the prediction probabilities
     probabilities = sentiment_model.predict_proba(
         [text]
     )[0]
 
-    # Select the highest probability as confidence
     confidence = probabilities.max()
 
-    # Return the unified output format
     return {
         "type": "sentiment",
+
         "result": {
             "label": str(prediction)
         },
+
         "confidence": round(
             float(confidence),
             2
@@ -179,11 +425,26 @@ def analyze_sentiment(text):
     }
 
 
-# Run evaluation and tests only when this file is executed directly
+# =========================================================
+# Run Evaluation
+# =========================================================
+
 if __name__ == "__main__":
 
     print(
-        "Dataset size:",
+        "============================================"
+    )
+
+    print(
+        "       Sentiment Model Evaluation"
+    )
+
+    print(
+        "============================================"
+    )
+
+    print(
+        "\nDataset size:",
         len(texts)
     )
 
@@ -193,29 +454,243 @@ if __name__ == "__main__":
     )
 
     print(
-        "Cross-validation scores:",
-        scores
+        "\nSentences in each class:"
     )
 
     print(
-        "Average accuracy:",
-        round(float(scores.mean()), 2)
+        "Positive:",
+        labels.count("positive")
     )
 
+    print(
+        "Negative:",
+        labels.count("negative")
+    )
+
+    print(
+        "Neutral:",
+        labels.count("neutral")
+    )
+
+
+    # -----------------------------------------------------
+    # Baseline Cross-Validation
+    # -----------------------------------------------------
+
+    print(
+        "\n============================================"
+    )
+
+    print(
+        "       Baseline Cross-Validation"
+    )
+
+    print(
+        "============================================"
+    )
+
+    print(
+        "Cross-validation scores:",
+        baseline_cv_scores
+    )
+
+    print(
+        "Average cross-validation accuracy:",
+        round(
+            float(baseline_cv_scores.mean()),
+            3
+        )
+    )
+
+
+    # -----------------------------------------------------
+    # Accuracy Comparison
+    # -----------------------------------------------------
+
+    print(
+        "\n============================================"
+    )
+
+    print(
+        "             Accuracy Results"
+    )
+
+    print(
+        "============================================"
+    )
+
+    print(
+        "Logistic Regression Accuracy "
+        "Before GridSearchCV:",
+        round(
+            float(baseline_accuracy),
+            3
+        )
+    )
+
+    print(
+        "Logistic Regression Accuracy "
+        "After GridSearchCV:",
+        round(
+            float(optimized_accuracy),
+            3
+        )
+    )
+
+
+    # -----------------------------------------------------
+    # Best GridSearchCV Results
+    # -----------------------------------------------------
+
+    print(
+        "\nBest GridSearchCV Parameters:"
+    )
+
+    print(
+        grid_search.best_params_
+    )
+
+    print(
+        "\nBest GridSearchCV "
+        "Cross-Validation Accuracy:",
+        round(
+            float(grid_search.best_score_),
+            3
+        )
+    )
+
+
+    # -----------------------------------------------------
+    # Baseline Classification Report
+    # -----------------------------------------------------
+
+    print(
+        "\n============================================"
+    )
+
+    print(
+        "Classification Report Before GridSearchCV"
+    )
+
+    print(
+        "============================================"
+    )
+
+    print(
+        classification_report(
+            y_test,
+            baseline_predictions,
+            zero_division=0
+        )
+    )
+
+
+    # -----------------------------------------------------
+    # Optimized Classification Report
+    # -----------------------------------------------------
+
+    print(
+        "\n============================================"
+    )
+
+    print(
+        "Classification Report After GridSearchCV"
+    )
+
+    print(
+        "============================================"
+    )
+
+    print(
+        classification_report(
+            y_test,
+            optimized_predictions,
+            zero_division=0
+        )
+    )
+
+
+    # -----------------------------------------------------
+    # Best Model
+    # -----------------------------------------------------
+
+    print(
+        "\n============================================"
+    )
+
+    print(
+        "                Best Model"
+    )
+
+    print(
+        "============================================"
+    )
+
+    print(
+        "Best Model:",
+        best_model_name
+    )
+
+    print(
+        "Best Model Accuracy:",
+        round(
+            float(best_model_accuracy),
+            3
+        )
+    )
+
+
+    # -----------------------------------------------------
+    # Test Sentences
+    # -----------------------------------------------------
+
     test_sentences = [
-        "The service is amazing",
-        "The application is very bad",
-        "The meeting starts at nine",
-        "I am not happy",
-        "I am satisfied with the result",
-        "This product is not good"
+        "The application works perfectly.",
+        "The service is very bad.",
+        "The meeting starts tomorrow.",
+        "I am extremely happy with the results.",
+        "I am disappointed with this product.",
+        "The document contains ten pages.",
+        "The team completed the task successfully.",
+        "The application keeps crashing.",
+        "The report was uploaded yesterday."
     ]
 
-    print("\nSentiment Test Results")
+
+    print(
+        "\n============================================"
+    )
+
+    print(
+        "         Sentiment Test Results"
+    )
+
+    print(
+        "============================================"
+    )
+
 
     for sentence in test_sentences:
-        result = analyze_sentiment(sentence)
 
-        print("\nText:", sentence)
-        print("Result:", result)
-        print("-" * 40)
+        result = analyze_sentiment(
+            sentence
+        )
+
+        print(
+            "\nText:",
+            sentence
+        )
+
+        print(
+            "Predicted Sentiment:",
+            result["result"]["label"]
+        )
+
+        print(
+            "Confidence:",
+            result["confidence"]
+        )
+
+        print(
+            "-" * 50
+        )
