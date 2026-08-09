@@ -2,7 +2,6 @@ import os
 import sys
 
 
-# Project root path
 PROJECT_ROOT = os.path.abspath(
     os.path.join(
         os.path.dirname(__file__),
@@ -10,8 +9,6 @@ PROJECT_ROOT = os.path.abspath(
     )
 )
 
-
-# Module paths
 INTEGRATION_PATH = os.path.join(
     PROJECT_ROOT,
     "integration"
@@ -28,28 +25,28 @@ NLP_MODULE_PATH = os.path.join(
 )
 
 
-# Add module paths to sys.path
 for path in (
     INTEGRATION_PATH,
     KNOWLEDGE_BASE_PATH,
     NLP_MODULE_PATH
 ):
     if path not in sys.path:
-        sys.path.append(path)
+        sys.path.insert(0, path)
 
 
-# Imports
 from assistant_core import process_input
-from knowledge_store import get_recent
+from knowledge_store import (
+    get_recent,
+    sentiment_summary,
+    top_keywords_overall
+)
 from summarizer import summarize_text
-import summarizer
 
-print("Summarizer loaded from:", summarizer.__file__)
 
 def analyze_text():
     """
-    Analyze text using assistant_core.process_input()
-    and display intent, sentiment, keywords, and summary.
+    Analyze text through assistant_core and display:
+    intent, sentiment, keywords, and summary.
     """
 
     text = input(
@@ -57,18 +54,12 @@ def analyze_text():
     ).strip()
 
     if not text:
-        print(
-            "\nError: The text cannot be empty."
-        )
+        print("\nError: The text cannot be empty.")
         return
 
     try:
-        print(
-            "\nAnalyzing text..."
-        )
+        print("\nAnalyzing text...")
 
-        # Get intent, sentiment, and keywords
-        # from assistant_core
         results = process_input(
             text,
             input_type="text"
@@ -78,34 +69,18 @@ def analyze_text():
         sentiment = results["sentiment"]
         keywords = results["keywords"]
 
-        # Generate an extractive summary
         summary = summarize_text(
             text,
             n_sentences=2
         )
 
-        print(
-            "\n=============================="
-        )
-        print(
-            "       Analysis Results"
-        )
-        print(
-            "=============================="
-        )
+        print("\n==============================")
+        print("       Analysis Results")
+        print("==============================")
 
-        # Intent result
-        print(
-            "\n1. Intent Classification"
-        )
-        print(
-            "Type:",
-            intent["type"]
-        )
-        print(
-            "Label:",
-            intent["result"]["label"]
-        )
+        print("\n1. Intent Classification")
+        print("Type:", intent["type"])
+        print("Label:", intent["result"]["label"])
         print(
             "Confidence:",
             round(
@@ -114,18 +89,9 @@ def analyze_text():
             )
         )
 
-        # Sentiment result
-        print(
-            "\n2. Sentiment Analysis"
-        )
-        print(
-            "Type:",
-            sentiment["type"]
-        )
-        print(
-            "Label:",
-            sentiment["result"]["label"]
-        )
+        print("\n2. Sentiment Analysis")
+        print("Type:", sentiment["type"])
+        print("Label:", sentiment["result"]["label"])
         print(
             "Confidence:",
             round(
@@ -134,14 +100,8 @@ def analyze_text():
             )
         )
 
-        # Keyword result
-        print(
-            "\n3. Keyword Extraction"
-        )
-        print(
-            "Type:",
-            keywords["type"]
-        )
+        print("\n3. Keyword Extraction")
+        print("Type:", keywords["type"])
         print(
             "Keywords:",
             keywords["result"]["keywords"]
@@ -154,17 +114,10 @@ def analyze_text():
             )
         )
 
-        # Summary result
-        print(
-            "\n4. Summary"
-        )
-        print(
-            summary
-        )
+        print("\n4. Summary")
+        print(summary)
 
-        print(
-            "\nText analyzed successfully."
-        )
+        print("\nText analyzed successfully.")
 
     except KeyError as error:
         print(
@@ -173,34 +126,25 @@ def analyze_text():
             error
         )
 
-    except TypeError as error:
-        print(
-            "\nError: Invalid data type:",
-            error
-        )
-
-    except ValueError as error:
-        print(
-            "\nError:",
-            error
-        )
+    except (TypeError, ValueError) as error:
+        print("\nError:", error)
 
     except Exception as error:
         print(
-            "\nAn error occurred while "
-            "analyzing the text:",
+            "\nAn error occurred while analyzing the text:",
             error
         )
 
 
 def analyze_image():
     """
-    Analyze an image using assistant_core.
+    Analyze an image through assistant_core
+    and display face detection results.
     """
 
     image_path = input(
         "\nEnter the image path: "
-    ).strip()
+    ).strip().strip('"').strip("'")
 
     if not image_path:
         print(
@@ -209,30 +153,59 @@ def analyze_image():
         return
 
     try:
+        print("\nAnalyzing image...")
+
         result = process_input(
             image_path,
             input_type="image"
         )
 
+        print("\n==============================")
+        print("     Face Detection Result")
+        print("==============================")
+
+        print("Type:", result["type"])
         print(
-            "\nImage Analysis Result:"
+            "Face Detected:",
+            result["result"]["detected"]
         )
         print(
-            result
+            "Number of Faces:",
+            result["result"]["count"]
         )
+        print(
+            "Confidence:",
+            round(
+                float(result["confidence"]),
+                2
+            )
+        )
+
+        if result["result"]["detected"]:
+            print("\nFaces detected successfully.")
+        else:
+            print("\nNo faces were detected.")
+
+    except KeyError as error:
+        print(
+            "\nError: Invalid face detection result. "
+            "Missing key:",
+            error
+        )
+
+    except (TypeError, ValueError) as error:
+        print("\nError:", error)
 
     except Exception as error:
         print(
-            "\nAn error occurred while "
-            "analyzing the image:",
+            "\nAn error occurred while analyzing the image:",
             error
         )
 
 
 def show_last_interactions():
     """
-    Display recent interactions using
-    knowledge_store.get_recent(n).
+    Display recent saved interactions.
     """
 
     try:
@@ -240,12 +213,11 @@ def show_last_interactions():
             "\nHow many interactions do you want to display? "
         ).strip()
 
-        if not number_input:
-            number = 5
-        else:
-            number = int(
-                number_input
-            )
+        number = (
+            5
+            if not number_input
+            else int(number_input)
+        )
 
         if number <= 0:
             print(
@@ -253,9 +225,7 @@ def show_last_interactions():
             )
             return
 
-        interactions = get_recent(
-            number
-        )
+        interactions = get_recent(number)
 
         if not interactions:
             print(
@@ -263,29 +233,17 @@ def show_last_interactions():
             )
             return
 
-        print(
-            "\n=============================="
-        )
-        print(
-            "      Recent Interactions"
-        )
-        print(
-            "=============================="
-        )
+        print("\n==============================")
+        print("      Recent Interactions")
+        print("==============================")
 
         for index, interaction in enumerate(
             interactions,
             start=1
         ):
-            print(
-                f"\nInteraction {index}:"
-            )
-            print(
-                interaction
-            )
-            print(
-                "-" * 40
-            )
+            print(f"\nInteraction {index}:")
+            print(interaction)
+            print("-" * 40)
 
     except ValueError:
         print(
@@ -294,52 +252,86 @@ def show_last_interactions():
 
     except Exception as error:
         print(
-            "\nAn error occurred while "
-            "loading recent interactions:",
+            "\nAn error occurred while loading interactions:",
             error
         )
 
 
 def show_statistics():
     """
-    Temporary function for displaying statistics.
+    Display sentiment statistics and
+    the most frequent keywords.
     """
 
-    print(
-        "\nStatistics are not available yet."
-    )
+    try:
+        sentiment_stats = sentiment_summary()
+        top_keywords = top_keywords_overall(
+            n=10
+        )
+
+        print("\n==============================")
+        print("          Statistics")
+        print("==============================")
+
+        print("\n1. Sentiment Summary")
+        print(
+            "Positive:",
+            sentiment_stats.get(
+                "positive",
+                0
+            )
+        )
+        print(
+            "Negative:",
+            sentiment_stats.get(
+                "negative",
+                0
+            )
+        )
+        print(
+            "Neutral:",
+            sentiment_stats.get(
+                "neutral",
+                0
+            )
+        )
+
+        print("\n2. Top Keywords")
+
+        if not top_keywords:
+            print(
+                "No keywords were found."
+            )
+        else:
+            for index, keyword in enumerate(
+                top_keywords,
+                start=1
+            ):
+                print(
+                    f"{index}. {keyword}"
+                )
+
+    except Exception as error:
+        print(
+            "\nAn error occurred while loading statistics:",
+            error
+        )
 
 
 def main_menu():
     """
-    Display and manage the main CLI menu.
+    Display and manage the CLI menu.
     """
 
     while True:
-        print(
-            "\n=============================="
-        )
-        print(
-            "      Smart Assistant Menu"
-        )
-        print(
-            "=============================="
-        )
-        print(
-            "1. Analyze text"
-        )
-        print(
-            "2. Analyze image"
-        )
-        print(
-            "3. Show last interactions"
-        )
-        print(
-            "4. Show statistics"
-        )
-        print(
-            "5. Exit"
-        )
+        print("\n==============================")
+        print("      Smart Assistant Menu")
+        print("==============================")
+        print("1. Analyze text")
+        print("2. Analyze image")
+        print("3. Show last interactions")
+        print("4. Show statistics")
+        print("5. Exit")
 
         choice = input(
             "\nEnter a number from 1 to 5: "

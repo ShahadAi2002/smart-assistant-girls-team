@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.pipeline import Pipeline
 
 
 def combine_parts(first_parts, second_parts):
@@ -13,7 +14,6 @@ def combine_parts(first_parts, second_parts):
     Example:
         10 first parts × 10 second parts = 100 sentences.
     """
-
     return [
         f"{first_part} {second_part}".strip()
         for first_part in first_parts
@@ -38,7 +38,6 @@ question_starters = [
     "Do you understand"
 ]
 
-
 question_topics = [
     "why the application is not responding?",
     "how I can open the saved file?",
@@ -51,7 +50,6 @@ question_topics = [
     "whether the database is connected?",
     "how I can recover a deleted message?"
 ]
-
 
 questions = combine_parts(
     question_starters,
@@ -76,7 +74,6 @@ command_starters = [
     "Before continuing,"
 ]
 
-
 command_actions = [
     "open the latest saved file.",
     "run the program again.",
@@ -89,7 +86,6 @@ command_actions = [
     "restart the application.",
     "verify that all tests pass."
 ]
-
 
 commands = combine_parts(
     command_starters,
@@ -114,7 +110,6 @@ complaint_starters = [
     "Something is wrong because"
 ]
 
-
 complaint_issues = [
     "the application keeps crashing.",
     "the results are still incorrect.",
@@ -127,7 +122,6 @@ complaint_issues = [
     "the same error appears every time.",
     "the application closes without warning."
 ]
-
 
 complaints = combine_parts(
     complaint_starters,
@@ -152,7 +146,6 @@ greeting_starters = [
     "Hi everyone."
 ]
 
-
 greeting_followups = [
     "I hope you are doing well.",
     "It is nice to see you today.",
@@ -165,7 +158,6 @@ greeting_followups = [
     "It is a pleasure to speak with you.",
     "Welcome back to the application."
 ]
-
 
 greetings = combine_parts(
     greeting_starters,
@@ -184,14 +176,11 @@ intent_data = {
     "greeting": greetings
 }
 
-
 texts = []
 labels = []
 
-
 for intent_label, intent_sentences in intent_data.items():
     texts.extend(intent_sentences)
-
     labels.extend(
         [intent_label] * len(intent_sentences)
     )
@@ -216,52 +205,45 @@ assert labels.count("greeting") == 100
 
 
 # =========================================================
-# Convert Text into TF-IDF Features
-# =========================================================
-
-vectorizer = TfidfVectorizer(
-    ngram_range=(1, 2),
-    lowercase=True
-)
-
-
-X = vectorizer.fit_transform(
-    texts
-)
-
-y = labels
-
-
-# =========================================================
-# Split Training and Testing Data
+# Split RAW Text Before TF-IDF
+# This prevents data leakage.
 # =========================================================
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
+    texts,
+    labels,
     test_size=0.25,
     random_state=42,
-    stratify=y
+    stratify=labels
 )
 
 
 # =========================================================
-# Model 1: Naive Bayes
+# Model 1: Naive Bayes Pipeline
 # =========================================================
 
-naive_bayes_model = MultinomialNB()
-
+naive_bayes_model = Pipeline([
+    (
+        "tfidf",
+        TfidfVectorizer(
+            ngram_range=(1, 2),
+            lowercase=True
+        )
+    ),
+    (
+        "classifier",
+        MultinomialNB()
+    )
+])
 
 naive_bayes_model.fit(
     X_train,
     y_train
 )
 
-
 nb_predictions = naive_bayes_model.predict(
     X_test
 )
-
 
 nb_accuracy = accuracy_score(
     y_test,
@@ -271,25 +253,33 @@ nb_accuracy = accuracy_score(
 
 # =========================================================
 # Model 2: Baseline Logistic Regression
-# Before GridSearchCV
 # =========================================================
 
-baseline_logistic_model = LogisticRegression(
-    max_iter=2000,
-    random_state=42
-)
-
+baseline_logistic_model = Pipeline([
+    (
+        "tfidf",
+        TfidfVectorizer(
+            ngram_range=(1, 2),
+            lowercase=True
+        )
+    ),
+    (
+        "classifier",
+        LogisticRegression(
+            max_iter=2000,
+            random_state=42
+        )
+    )
+])
 
 baseline_logistic_model.fit(
     X_train,
     y_train
 )
 
-
 baseline_predictions = baseline_logistic_model.predict(
     X_test
 )
-
 
 baseline_accuracy = accuracy_score(
     y_test,
@@ -298,11 +288,32 @@ baseline_accuracy = accuracy_score(
 
 
 # =========================================================
-# GridSearchCV Parameters
+# GridSearchCV Pipeline
 # =========================================================
 
+grid_pipeline = Pipeline([
+    (
+        "tfidf",
+        TfidfVectorizer(
+            lowercase=True
+        )
+    ),
+    (
+        "classifier",
+        LogisticRegression(
+            max_iter=3000,
+            random_state=42
+        )
+    )
+])
+
 param_grid = {
-    "C": [
+    "tfidf__ngram_range": [
+        (1, 1),
+        (1, 2)
+    ],
+
+    "classifier__C": [
         0.01,
         0.1,
         1,
@@ -310,34 +321,25 @@ param_grid = {
         100
     ],
 
-    # lbfgs supports multiclass classification
-    "solver": [
+    "classifier__solver": [
         "lbfgs"
     ],
 
-    "class_weight": [
+    "classifier__class_weight": [
         None,
         "balanced"
     ]
 }
 
 
-# =========================================================
-# GridSearchCV
-# =========================================================
-
 grid_search = GridSearchCV(
-    estimator=LogisticRegression(
-        max_iter=3000,
-        random_state=42
-    ),
+    estimator=grid_pipeline,
     param_grid=param_grid,
     cv=5,
     scoring="accuracy",
     n_jobs=-1,
     error_score="raise"
 )
-
 
 grid_search.fit(
     X_train,
@@ -347,16 +349,13 @@ grid_search.fit(
 
 # =========================================================
 # Optimized Logistic Regression
-# After GridSearchCV
 # =========================================================
 
 optimized_logistic_model = grid_search.best_estimator_
 
-
 optimized_predictions = optimized_logistic_model.predict(
     X_test
 )
-
 
 optimized_accuracy = accuracy_score(
     y_test,
@@ -386,76 +385,59 @@ model_results = {
 }
 
 
-# Choose the model with the highest test accuracy
-best_model_name = max(
-    model_results,
-    key=lambda model_name: model_results[
-        model_name
-    ]["accuracy"]
+best_accuracy = max(
+    result["accuracy"]
+    for result in model_results.values()
 )
 
+
+best_model_names = [
+    model_name
+    for model_name, result in model_results.items()
+    if result["accuracy"] == best_accuracy
+]
+
+
+best_model_name = best_model_names[0]
 
 best_model = model_results[
     best_model_name
 ]["model"]
-
 
 best_model_accuracy = model_results[
     best_model_name
 ]["accuracy"]
 
 
+# =========================================================
+# Intent Classification Function
+# =========================================================
+
 def classify_intent(text):
     """
     Classify the intent of the given text.
-
-    Args:
-        text (str): Input text.
-
-    Returns:
-        dict: Intent label and confidence.
-
-    Example:
-        {
-            "type": "intent",
-            "result": {
-                "label": "question"
-            },
-            "confidence": 0.85
-        }
     """
 
-    # Validate input type
     if not isinstance(text, str):
         raise TypeError(
             "The input text must be a string."
         )
 
-    # Remove extra spaces
     text = text.strip()
 
-    # Reject empty input
     if not text:
         raise ValueError(
             "The input text cannot be empty."
         )
 
-    # Convert text into TF-IDF features
-    text_vector = vectorizer.transform(
-        [text]
-    )
-
-    # Predict intent
     predicted_intent = best_model.predict(
-        text_vector
+        [text]
     )[0]
 
-    # Get prediction probabilities
     probabilities = best_model.predict_proba(
-        text_vector
+        [text]
     )[0]
 
-    # Select the highest probability
     confidence = probabilities.max()
 
     return {
@@ -492,6 +474,7 @@ if __name__ == "__main__":
         "============================================"
     )
 
+
     print(
         "\nDataset size:",
         len(texts)
@@ -503,14 +486,31 @@ if __name__ == "__main__":
     )
 
     print(
-        "TF-IDF shape:",
-        X.shape
+        "Training samples:",
+        len(X_train)
+    )
+
+    print(
+        "Testing samples:",
+        len(X_test)
+    )
+
+
+    training_tfidf = naive_bayes_model.named_steps[
+        "tfidf"
+    ].transform(X_train)
+
+
+    print(
+        "Training TF-IDF shape:",
+        training_tfidf.shape
     )
 
     print(
         "Classes:",
-        sorted(set(y))
+        sorted(set(labels))
     )
+
 
     print(
         "\nSentences in each class:"
@@ -537,9 +537,9 @@ if __name__ == "__main__":
     )
 
 
-    # -----------------------------------------------------
-    # Accuracy Comparison
-    # -----------------------------------------------------
+    # =====================================================
+    # Accuracy Results
+    # =====================================================
 
     print(
         "\n============================================"
@@ -553,6 +553,7 @@ if __name__ == "__main__":
         "============================================"
     )
 
+
     print(
         "Naive Bayes Accuracy:",
         round(
@@ -560,6 +561,7 @@ if __name__ == "__main__":
             3
         )
     )
+
 
     print(
         "Logistic Regression Accuracy "
@@ -569,6 +571,7 @@ if __name__ == "__main__":
             3
         )
     )
+
 
     print(
         "Logistic Regression Accuracy "
@@ -580,9 +583,9 @@ if __name__ == "__main__":
     )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # GridSearchCV Results
-    # -----------------------------------------------------
+    # =====================================================
 
     print(
         "\nBest GridSearchCV Parameters:"
@@ -591,6 +594,7 @@ if __name__ == "__main__":
     print(
         grid_search.best_params_
     )
+
 
     print(
         "\nBest GridSearchCV "
@@ -602,9 +606,9 @@ if __name__ == "__main__":
     )
 
 
-    # -----------------------------------------------------
-    # Naive Bayes Classification Report
-    # -----------------------------------------------------
+    # =====================================================
+    # Naive Bayes Report
+    # =====================================================
 
     print(
         "\n============================================"
@@ -618,6 +622,7 @@ if __name__ == "__main__":
         "============================================"
     )
 
+
     print(
         classification_report(
             y_test,
@@ -627,9 +632,9 @@ if __name__ == "__main__":
     )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # Baseline Logistic Regression Report
-    # -----------------------------------------------------
+    # =====================================================
 
     print(
         "\n============================================"
@@ -643,6 +648,7 @@ if __name__ == "__main__":
         "============================================"
     )
 
+
     print(
         classification_report(
             y_test,
@@ -652,9 +658,9 @@ if __name__ == "__main__":
     )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # Optimized Logistic Regression Report
-    # -----------------------------------------------------
+    # =====================================================
 
     print(
         "\n============================================"
@@ -668,6 +674,7 @@ if __name__ == "__main__":
         "============================================"
     )
 
+
     print(
         classification_report(
             y_test,
@@ -677,9 +684,9 @@ if __name__ == "__main__":
     )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # Best Model
-    # -----------------------------------------------------
+    # =====================================================
 
     print(
         "\n============================================"
@@ -693,10 +700,20 @@ if __name__ == "__main__":
         "============================================"
     )
 
+
+    if len(best_model_names) > 1:
+
+        print(
+            "Models tied for best accuracy:",
+            ", ".join(best_model_names)
+        )
+
+
     print(
-        "Best Model:",
+        "Selected Model:",
         best_model_name
     )
+
 
     print(
         "Best Model Accuracy:",
@@ -707,18 +724,26 @@ if __name__ == "__main__":
     )
 
 
-    # -----------------------------------------------------
+    # =====================================================
     # Test Sentences
-    # -----------------------------------------------------
+    # =====================================================
 
     sample_sentences = [
+
         "Could you explain why the program stopped?",
+
         "Please open the latest report.",
+
         "I am disappointed because the application is slow.",
+
         "Good morning, I hope you are doing well.",
+
         "Can you tell me where the file is stored?",
+
         "Make sure you save all the changes.",
+
         "The same error keeps appearing every time.",
+
         "Hello, it is nice to meet you."
     ]
 
@@ -742,20 +767,24 @@ if __name__ == "__main__":
             sentence
         )
 
+
         print(
             "\nText:",
             sentence
         )
+
 
         print(
             "Predicted Intent:",
             result["result"]["label"]
         )
 
+
         print(
             "Confidence:",
             result["confidence"]
         )
+
 
         print(
             "-" * 50
