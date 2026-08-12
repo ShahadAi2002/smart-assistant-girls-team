@@ -1,3 +1,11 @@
+"""
+Text summarization module.
+
+This module provides simple extractive text summarization using TF-IDF.
+It selects the highest-scoring sentences while preserving their
+original order in the text.
+"""
+
 import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -75,8 +83,20 @@ def summarize(text, n_sentences=2):
     return " ".join(summary_sentences)
 
 
-# Keep compatibility with cli_interface.py
 def summarize_text(text, n_sentences=2):
+    """
+    Summarize text using the main summarize() function.
+
+    This wrapper is kept for compatibility with cli_interface.py.
+
+    Args:
+        text (str): The input text.
+        n_sentences (int): Number of sentences to include.
+
+    Returns:
+        str: The summarized text.
+    """
+
     return summarize(
         text,
         n_sentences=n_sentences
