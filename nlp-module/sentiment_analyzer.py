@@ -1,3 +1,12 @@
+"""
+Sentiment analysis module.
+
+This module builds and evaluates a sentiment classification model
+for classifying text into positive, negative, or neutral sentiment.
+
+It provides the analyze_sentiment() function, which returns
+the predicted sentiment label and confidence score.
+"""
 # Imports
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression

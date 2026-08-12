@@ -1,3 +1,13 @@
+"""
+Intent classification module.
+
+This module builds and evaluates machine learning models for classifying
+user text into four intent categories: question, command, complaint,
+and greeting.
+
+It provides the classify_intent() function for predicting the intent
+and confidence score of a given text.
+"""
 # Imports
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV

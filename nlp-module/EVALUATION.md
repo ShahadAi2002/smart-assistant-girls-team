@@ -98,4 +98,4 @@ The Baseline Logistic Regression model was selected because both the baseline an
 * The sentiment analysis models achieved 100% accuracy on the current test dataset.
 * Both tasks achieved a best cross-validation accuracy of 100%.
 * Naive Bayes was selected as the final intent classification model.
-* Baseline Logistic Regression was selected as the final sentiment analysis model
+* Baseline Logistic Regression was selected as the final sentiment analysis modelss

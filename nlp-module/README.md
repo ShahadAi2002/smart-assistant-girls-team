@@ -45,7 +45,6 @@ Example output:
 ```python
 analyze_sentiment(text)
 ```
-
 This function analyzes the sentiment of the input text.
 
 Possible labels:

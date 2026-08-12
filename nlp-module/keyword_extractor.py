@@ -1,3 +1,10 @@
+"""
+Keyword extraction module.
+
+This module extracts important keywords from text using TF-IDF.
+It provides functions for extracting keywords from a single text
+or from a batch of texts.
+"""
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 

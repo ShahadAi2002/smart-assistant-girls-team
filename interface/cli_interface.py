@@ -1,3 +1,10 @@
+"""
+Command-line interface module.
+
+This module provides the main CLI for the Smart Multi-Modal Assistant.
+It allows users to analyze text and images, view recent interactions,
+display statistics, and access NLP results through the assistant core.
+"""
 import os
 import sys
 
